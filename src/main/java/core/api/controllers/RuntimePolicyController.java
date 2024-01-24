@@ -22,8 +22,8 @@ public class RuntimePolicyController {
 
     @PostMapping("/Update")
     public ResponseEntity<String> updateRuntimePolicy(@RequestBody RuntimePolicies runtimePolicies) {
-        RuntimePolicies savedRuntimePolicies = runtimePolicyService.save(runtimePolicies);
-        if (savedRuntimePolicies == null) {
+        boolean savedRuntimePolicies = runtimePolicyService.save(runtimePolicies);
+        if (savedRuntimePolicies == false) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to update");
         }
         return ResponseEntity.status(HttpStatus.OK).body("success");
@@ -31,8 +31,8 @@ public class RuntimePolicyController {
 
     @PutMapping("/Create")
     public ResponseEntity<String> createRuntimePolicy(@RequestBody RuntimePolicies runtimePolicies) {
-        RuntimePolicies savedRuntimePolicies = runtimePolicyService.save(runtimePolicies);
-        if (savedRuntimePolicies == null) {
+        boolean savedRuntimePolicies = runtimePolicyService.save(runtimePolicies);
+        if (savedRuntimePolicies == false) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to create");
         }
         return ResponseEntity.status(HttpStatus.OK).body("success");

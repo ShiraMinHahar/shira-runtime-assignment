@@ -20,7 +20,7 @@ public class RuntimePolicyService {
 
     private final RuntimeEnforcer runtimeEnforcer;
 
-    public RuntimePolicies save(RuntimePolicies runtimePolicies) {
+    public Boolean save(RuntimePolicies runtimePolicies) {
         if (runtimePolicies == null) {
             return null;
         }
@@ -31,20 +31,20 @@ public class RuntimePolicyService {
                 existingRuntimePolicies.setControls(runtimePolicies.getControls());
                 saveRuntimePolicies = runtimePolicyRepository.save(existingRuntimePolicies);
             } else {
+//                runtimePolicies.setControls(to_jsonb(runtimePolicies.getControls())
                 saveRuntimePolicies = runtimePolicyRepository.save(runtimePolicies);
             }
         } catch (NonTransientDataAccessException e) {
             log.error("Failed to save - database error '{}'.", runtimePolicies.getPolicyName(), e);
-            return null;
+            return false;
         } catch (DataAccessException e) {
             log.error("Failed to save - non transient database error '{}'.", runtimePolicies.getPolicyName(), e);
             throw e;
         } catch (Exception e) {
             log.error("Failed to save '{}'.", runtimePolicies.getPolicyName(), e);
-            return null;
+            return false;
         }
-        updateRuntimeEnforcer(saveRuntimePolicies);
-        return saveRuntimePolicies;
+        return updateRuntimeEnforcer(saveRuntimePolicies);
     }
 
     public boolean delete(RuntimePolicies runtimePolicies) {
@@ -56,8 +56,7 @@ public class RuntimePolicyService {
             RuntimePolicies existingRuntimePolicies = runtimePolicyRepository.findByPolicyName(runtimePolicies.getPolicyName());
             if (existingRuntimePolicies != null) {
                 runtimePolicyRepository.delete(existingRuntimePolicies);
-                deleteRuntimeEnforcer(existingRuntimePolicies);
-                return true;
+                return deleteRuntimeEnforcer(existingRuntimePolicies);
             }
         } catch (NonTransientDataAccessException e) {
             log.error("Failed to delete - database error '{}'.", runtimePolicies.getPolicyName(), e);

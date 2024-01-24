@@ -23,9 +23,9 @@ public class RuntimeEnforcer {
     }
 
     private void loadPoliciesFromDatabase() {
-        List<RuntimePolicies> policies = runtimePolicyRepository.getAllByAuthor("admin");
+        List<RuntimePolicies> policies = runtimePolicyRepository.getAll();
         for (RuntimePolicies policy : policies) {
-            policyCache.put(policy.getPolicyName(), calculateHash(policy.getControls()));
+            policyCache.put(policy.getPolicyName(), policy);
         }
     }
 
@@ -33,38 +33,28 @@ public class RuntimeEnforcer {
         if (runtimePolicies == null) {
             return false;
         }
-
-        policyCache.compute(runtimePolicies.getPolicyName(), (key, existingHash) -> {
+        RuntimePolicies runtimePolicies1 = policyCache.compute(runtimePolicies.getPolicyName(), (key, existingHash) -> {
             // Calculate and update the hash atomically
-            RuntimePolicies newHash = calculateHash(runtimePolicies.getControls());
-            if (existingHash == null || !existingHash.equals(newHash)) {
-                // Policies have changed or it's the first time, process the new policies
-                // Your logic to process the updated policy goes here
-                return newHash;
+            if (existingHash == null || !existingHash.equals(runtimePolicies)) {
+                return runtimePolicies;
             } else {
-                // Policies are the same, skip processing
                 return existingHash;
             }
         });
-
+        policyCache.put(runtimePolicies1.getPolicyName(), runtimePolicies1);
         return true;
     }
 
     public boolean deleteRuntimePolicy(RuntimePolicies runtimePolicies) {
-        if (runtimePolicies == null) {
+        if (runtimePolicies == null || policyCache.remove(runtimePolicies.getPolicyName()) == null) {
             return false;
         }
-
-        policyCache.remove(runtimePolicies.getPolicyName());
-
-        // Your logic to handle policy deletion goes here
-
         return true;
     }
 
-    private RuntimePolicies calculateHash(String input) {
-        // Your hash calculation logic goes here
-        // Ensure it's consistent with the logic used in the PolicyCache class
-        return new RuntimePolicies();
-    }
+    //    private RuntimePolicies calculateHash(String input) {
+    //        // Your hash calculation logic goes here
+    //        // Ensure it's consistent with the logic used in the PolicyCache class
+    //        return new RuntimePolicies();
+    //    }
 }
