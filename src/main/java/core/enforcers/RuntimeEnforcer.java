@@ -12,17 +12,24 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 @Log4j2
 public class RuntimeEnforcer {
-
-    private static final Map<String, RuntimePolicies> policyCache = new ConcurrentHashMap<>();
+//The enforcer contains a static map of all the runtime policies
+//When creating the first object, all the runtime policies are loaded from the db.
+//Each creation, update or deletion of a runtime policy updates the map at runtime.
+//When creating an enforcer, a RuntimeEnforcer object is created and because the map is static, any changes to the map will be immediately transferred to the enforcer.
+//When a new enforcer object is created, an object is created with an updated map and the enforcer contains rules for how it goes over the map to enforce the policies.
+    private static final Map<String, RuntimePolicies> policyCache = loadPoliciesFromDatabase();
 
     private final RuntimePolicyRepository runtimePolicyRepository;
 
     public RuntimeEnforcer(RuntimePolicyRepository runtimePolicyRepository) {
         this.runtimePolicyRepository = runtimePolicyRepository;
-        loadPoliciesFromDatabase();
+        if (policyCache.isEmpty()) {
+            loadPoliciesFromDatabase();
+        }
     }
 
-    private void loadPoliciesFromDatabase() {
+    private static void loadPoliciesFromDatabase() {
+        policyCache = new ConcurrentHashMap<>();
         List<RuntimePolicies> policies = runtimePolicyRepository.getAll();
         for (RuntimePolicies policy : policies) {
             policyCache.put(policy.getPolicyName(), policy);
